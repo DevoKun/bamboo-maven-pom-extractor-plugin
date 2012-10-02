@@ -5,15 +5,15 @@
         <vendor name="${project.organization.name}" url="${project.organization.url}" />
     </plugin-info>
 
-    <!-- internationalize your plugin -->
-    <resource type="i18n" name="com.davidehringer.atlassian.bamboo.maven language" location="english"/>
+    <resource type="i18n" name="com.davidehringer.atlassian.bamboo.maven language" location="com/davidehringer/atlassian/bamboo/maven/english"/>
 
-    <taskType name="Maven POM Property Extractor" class="com.davidehringer.atlassian.bamboo.maven.MavenVariableTask" key="maven-pom-parser-plugin">
-      <description>Extracts values from Maven POMs and sets Plan variables using the values.</description>
+    <taskType name="Maven POM Value Extractor" class="com.davidehringer.atlassian.bamboo.maven.MavenVariableTask" key="maven-pom-parser-plugin">
+      <description>Extracts values from Maven POMs and sets build variables using the values.</description>
       <category name="builder"/>
       
       <configuration class="com.davidehringer.atlassian.bamboo.maven.MavenVariableTaskConfigurator"/>
       
-      <resource type="freemarker" name="edit" location="editMavenVariableTask.ftl"/>
+      <resource type="freemarker" name="edit" location="com/davidehringer/atlassian/bamboo/maven/editMavenVariableTask.ftl"/>
+      <resource type="download" name="icon" location="com/davidehringer/atlassian/bamboo/maven/maven.png"/>
     </taskType>
 </atlassian-plugin>

@@ -23,10 +23,7 @@ import java.util.Map;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.atlassian.bamboo.agent.bootstrap.AgentContext;
 import com.atlassian.bamboo.build.logger.BuildLogger;
-import com.atlassian.bamboo.plan.Plan;
-import com.atlassian.bamboo.plan.PlanKeys;
 import com.atlassian.bamboo.plan.PlanManager;
 import com.atlassian.bamboo.task.TaskContext;
 import com.atlassian.bamboo.task.TaskException;
@@ -34,13 +31,8 @@ import com.atlassian.bamboo.task.TaskResult;
 import com.atlassian.bamboo.task.TaskResultBuilder;
 import com.atlassian.bamboo.task.TaskType;
 import com.atlassian.bamboo.v2.build.BuildContext;
-import com.atlassian.bamboo.v2.build.agent.remote.RemoteAgent;
 import com.atlassian.bamboo.v2.build.agent.remote.sender.BambooAgentMessageSender;
-import com.atlassian.bamboo.variable.VariableDefinition;
-import com.atlassian.bamboo.variable.VariableDefinitionImpl;
 import com.atlassian.bamboo.variable.VariableDefinitionManager;
-import com.atlassian.bamboo.variable.VariableType;
-import com.atlassian.spring.container.ContainerManager;
 import com.davidehringer.bamboo.maven.extractor.InvalidPomException;
 import com.davidehringer.bamboo.maven.extractor.PomValueExtractor;
 import com.davidehringer.bamboo.maven.extractor.PomValueExtractorMavenModel;
@@ -51,7 +43,7 @@ import com.davidehringer.bamboo.maven.extractor.PomValueExtractorMavenModel;
 public class MavenVariableTask implements TaskType {
 
 	private static final String DEFAULT_POM = "pom.xml";
-	
+
 	private PlanManager planManager;
 	private VariableDefinitionManager variableDefinitionManager;
 	private BambooAgentMessageSender bambooAgentMessageSender;
@@ -70,9 +62,6 @@ public class MavenVariableTask implements TaskType {
 		this.variableDefinitionManager = variableDefinitionManager;
 	}
 
-	// https://answers.atlassian.com/questions/35653/is-it-possible-to-set-bamboo-variables-in-one-stage-via-custom-task-and-retrieve-it-in-a-different-stage
-	// https://bitbucket.org/devtoolsmarketing/bamboo-maven-version-variable-updater-plugin
-
 	@NotNull
 	@Override
 	public TaskResult execute(@NotNull TaskContext taskContext)
@@ -87,13 +76,6 @@ public class MavenVariableTask implements TaskType {
 		String buildResultKey = taskContext.getBuildContext()
 				.getBuildResultKey();
 		BuildLogger buildLogger = taskContext.getBuildLogger();
-
-		
-// for testing only
-		String say = taskContext.getConfigurationMap().get(
-				"say");
-		buildLogger.addBuildLogEntry("Say: " + say);
-		
 
 		File pomFile = getPomFile(taskContext, buildLogger);
 
@@ -125,69 +107,47 @@ public class MavenVariableTask implements TaskType {
 				"gavOrCustom");
 		if ("0".equals(gavOrCustom)) {
 			String value = extractor.getValue("groupId");
-			variables.add(new Variable("maven.groupId", value));
+			variables.add(new Variable(fullVariableName("groupId", taskContext), value));
 
 			value = extractor.getValue("artifactId");
-			variables.add(new Variable("maven.artifactId", value));
+			variables.add(new Variable(fullVariableName("artifactId", taskContext), value));
 
 			value = extractor.getValue("version");
-			variables.add(new Variable("maven.version", value));
+			variables.add(new Variable(fullVariableName("version", taskContext), value));
+		} else if ("1".equals(gavOrCustom)) {
+			String variableName = taskContext.getConfigurationMap().get(
+					"customVariableName");
+			String element = taskContext.getConfigurationMap().get(
+					"customElement");
+			String value = extractor.getValue(element);
+			variables.add(new Variable(variableName, value));
 		} else {
 			// TODO
 		}
 		return variables;
 	}
+	
+	private String fullVariableName(String name, TaskContext taskContext){
+		String prefix = "maven.";
+		String prefixOption = taskContext.getConfigurationMap().get(
+				"prefixOption");
+		if("0".equals(prefixOption)){
+			prefix = taskContext.getConfigurationMap().get(
+					"customPrefix");
+		}
+		return prefix + name;
+	}
 
 	private void saveOrUpdateVariables(String topLevelPlanKey,
 			String buildResultKey, BuildLogger buildLogger,
 			List<Variable> variables, TaskContext taskContext) {
-//		AgentContext context = RemoteAgent.getContext();
-//		if (context != null) {
-//			// We're in a remote agent and we can't get access to managers
-//			// we want. Send something back home so they can do what we want
-//			// instead.
-//			if (bambooAgentMessageSender == null) {
-//				bambooAgentMessageSender = (BambooAgentMessageSender) ContainerManager
-//						.getComponent("bambooAgentMessageSender");
-//			}
-//			bambooAgentMessageSender.send(new CreateOrUpdateVariableMessage(
-//					topLevelPlanKey, buildResultKey, variables));
-//		} else {
-//			VariableManager manager = new VariableManager(planManager,
-//					variableDefinitionManager, buildLogger);
-//			manager.addOrUpdateVariables(topLevelPlanKey, variables);
-//		}
-		
-		
-//		Plan plan = planManager.getPlanByKey(PlanKeys
-//				.getPlanKey(topLevelPlanKey));
-		
-
 		for (Variable variable : variables) {
-			VariableDefinition variableDefinition = null;
 			String name = variable.getName();
 			String value = variable.getValue();
-			
-			
-			Map<String, String> customBuildData = taskContext.getBuildContext().getBuildResult().getCustomBuildData();
-			customBuildData.put(name, value);
 
-//			if (variableDefinition == null) {
-//				variableDefinition = new VariableDefinitionImpl();
-//				buildLogger.addBuildLogEntry("Adding Plan variable " + name
-//						+ ":" + value);
-//			} else {
-//				buildLogger.addBuildLogEntry("Updaing Plan variable from "
-//						+ name + ":" + variableDefinition.getValue() + " to "
-//						+ name + ":" + value);
-//			}
-//			variableDefinition.setPlan(plan);
-//			variableDefinition.setVariableType(VariableType.MANUAL);
-//			variableDefinition.setKey(name);
-//			variableDefinition.setValue(value);
-//
-//			variableDefinitionManager
-//					.saveVariableDefinition(variableDefinition);
+			Map<String, String> customBuildData = taskContext.getBuildContext()
+					.getBuildResult().getCustomBuildData();
+			customBuildData.put(name, value);
 		}
 	}
 

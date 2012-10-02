@@ -10,12 +10,12 @@
     <version>1.0-SNAPSHOT</version>
 
     <organization>
-        <name>Example Company</name>
-        <url>http://www.example.com/</url>
+        <name>David Ehringer</name>
+        <url>http://davidehringer.com</url>
     </organization>
 
-    <name>maven-pom-parser-plugin</name>
-    <description>This is the com.davidehringer.atlassian.bamboo.maven:maven-pom-parser-plugin plugin for Atlassian Bamboo.</description>
+    <name>Maven POM Value Extractor</name>
+    <description>This plugin provides a build task that extracts values from Maven POMs and sets build variables using those values.</description>
     <packaging>atlassian-plugin</packaging>
 
     <properties>
@@ -30,12 +30,6 @@
             <artifactId>atlassian-bamboo-web</artifactId>
             <version>${bamboo.version}</version>
             <scope>provided</scope>
-            <exclusions>
-            	<exclusion>
-            		<artifactId>commons-logging</artifactId>
-            		<groupId>commons-logging</groupId>
-            	</exclusion>
-            </exclusions>
         </dependency>
         
         <dependency>

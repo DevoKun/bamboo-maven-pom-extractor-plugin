@@ -18,6 +18,8 @@ package com.davidehringer.atlassian.bamboo.maven;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,13 +28,13 @@ import com.atlassian.bamboo.task.AbstractTaskConfigurator;
 import com.atlassian.bamboo.task.TaskDefinition;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
 import com.google.common.collect.Maps;
-import com.opensymphony.xwork.TextProvider;
 
 /**
  * @author David Ehringer
  */
 public class MavenVariableTaskConfigurator extends AbstractTaskConfigurator {
-	private TextProvider textProvider;
+	
+	private static final Log LOG = LogFactory.getLog(MavenVariableTaskConfigurator.class);
 
 	@NotNull
 	@Override
@@ -41,12 +43,16 @@ public class MavenVariableTaskConfigurator extends AbstractTaskConfigurator {
 			@Nullable final TaskDefinition previousTaskDefinition) {
 		final Map<String, String> config = super.generateTaskConfigMap(params,
 				previousTaskDefinition);
-		config.put("say", params.getString("say"));
 		config.put("projectFile", params.getString("projectFile"));
 		config.put("gavOrCustom", params.getString("gavOrCustom"));
-		System.out.println("projectFile: " + params.getString("projectFile"));
-		System.out.println("Options provides: " + params.getString("options"));
-		System.out.println("gavOrCustom: " + params.getString("gavOrCustom"));
+		LOG.debug("1");
+		
+		config.put("prefixOption", params.getString("prefixOption"));
+		config.put("customPrefix", params.getString("customPrefix"));
+		LOG.debug("2");
+		
+		config.put("customVariableName", params.getString("customVariableName"));
+		config.put("customElement", params.getString("customElement"));
 		return config;
 	}
 
@@ -54,8 +60,8 @@ public class MavenVariableTaskConfigurator extends AbstractTaskConfigurator {
 	public void populateContextForCreate(
 			@NotNull final Map<String, Object> context) {
 		super.populateContextForCreate(context);
-		context.put("say", "Hello, World!");
 		context.put("gavOrCustom", "0");
+		context.put("prefixOption", "1");
 		populateContextForAll(context);
 	}
 
@@ -64,18 +70,29 @@ public class MavenVariableTaskConfigurator extends AbstractTaskConfigurator {
 			@NotNull final Map<String, Object> context,
 			@NotNull final TaskDefinition taskDefinition) {
 		super.populateContextForEdit(context, taskDefinition);
-		context.put("say", taskDefinition.getConfiguration().get("say"));
 		context.put("gavOrCustom", taskDefinition.getConfiguration().get("gavOrCustom"));
 		context.put("projectFile", taskDefinition.getConfiguration().get("projectFile"));
+		
+		context.put("prefixOption", taskDefinition.getConfiguration().get("prefixOption"));
+		context.put("customPrefix", taskDefinition.getConfiguration().get("customPrefix"));
+		
+		context.put("customVariableName", taskDefinition.getConfiguration().get("customVariableName"));
+		context.put("customElement", taskDefinition.getConfiguration().get("customElement"));
 		populateContextForAll(context);
 	}
 
 	private void populateContextForAll(
 			@NotNull final Map<String, Object> context) {
 		Map<String, String> servers = Maps.newHashMap();
-		servers.put("0", getI18nBean().getText("config.option.extract.gav"));
 		servers.put("1", getI18nBean().getText("config.option.extract.custom"));
+		servers.put("0", getI18nBean().getText("config.option.extract.gav"));
 		context.put("options", servers);
+		
+
+		Map<String, String> prefixOptions = Maps.newHashMap();
+		prefixOptions.put("1", getI18nBean().getText("config.option.prefix.maven"));
+		prefixOptions.put("0", getI18nBean().getText("config.option.prefix.custom"));
+		context.put("prefixOptions", prefixOptions);
 	}
 
 	@Override
@@ -83,27 +100,42 @@ public class MavenVariableTaskConfigurator extends AbstractTaskConfigurator {
 			@NotNull final Map<String, Object> context,
 			@NotNull final TaskDefinition taskDefinition) {
 		super.populateContextForView(context, taskDefinition);
-		context.put("say", taskDefinition.getConfiguration().get("say"));
 		context.put("gavOrCustom", taskDefinition.getConfiguration().get("gavOrCustom"));
 		context.put("projectFile", taskDefinition.getConfiguration().get("projectFile"));
+		
+		context.put("prefixOption", taskDefinition.getConfiguration().get("prefixOption"));
+		context.put("customPrefix", taskDefinition.getConfiguration().get("customPrefix"));
+		
+		context.put("customVariableName", taskDefinition.getConfiguration().get("customVariableName"));
+		context.put("customElement", taskDefinition.getConfiguration().get("customElement"));
 	}
 
 	@Override
 	public void validate(@NotNull final ActionParametersMap params,
 			@NotNull final ErrorCollection errorCollection) {
 		super.validate(params, errorCollection);
-
-		final String sayValue = params.getString("say");
-		if (StringUtils.isEmpty(sayValue)) {
-			errorCollection
-					.addError(
-							"say",
-							textProvider
-									.getText("com.davidehringer.atlassian.bamboo.maven.say.error"));
+		
+		String gavOrCustom = params.getString(
+				"gavOrCustom");
+		if("1".equals(gavOrCustom)){
+			String variableName = params.getString(
+					"customVariableName");
+			String element = params.getString(
+					"customElement");
+			if(StringUtils.isEmpty(variableName)){
+				errorCollection
+						.addError(
+								"customVariableName",
+								getI18nBean()
+										.getText("config.custom.variable.name.error"));
+			}
+			if(StringUtils.isEmpty(element)){
+				errorCollection
+						.addError(
+								"customElement",
+								getI18nBean()
+										.getText("config.custom.element.error"));
+			}
 		}
-	}
-
-	public void setTextProvider(final TextProvider textProvider) {
-		this.textProvider = textProvider;
 	}
 }
