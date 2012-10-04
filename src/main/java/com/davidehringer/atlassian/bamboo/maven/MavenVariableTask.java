@@ -21,18 +21,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import com.atlassian.bamboo.build.logger.BuildLogger;
-import com.atlassian.bamboo.plan.PlanManager;
 import com.atlassian.bamboo.task.TaskContext;
 import com.atlassian.bamboo.task.TaskException;
 import com.atlassian.bamboo.task.TaskResult;
 import com.atlassian.bamboo.task.TaskResultBuilder;
 import com.atlassian.bamboo.task.TaskType;
-import com.atlassian.bamboo.v2.build.BuildContext;
-import com.atlassian.bamboo.v2.build.agent.remote.sender.BambooAgentMessageSender;
-import com.atlassian.bamboo.variable.VariableDefinitionManager;
 import com.davidehringer.bamboo.maven.extractor.InvalidPomException;
 import com.davidehringer.bamboo.maven.extractor.PomValueExtractor;
 import com.davidehringer.bamboo.maven.extractor.PomValueExtractorMavenModel;
@@ -42,42 +40,25 @@ import com.davidehringer.bamboo.maven.extractor.PomValueExtractorMavenModel;
  */
 public class MavenVariableTask implements TaskType {
 
+	private static final Log LOG = LogFactory.getLog(MavenVariableTask.class);
+	
+	private static final String POM_ELEMENT_VERSION = "version";
+	private static final String POM_ELEMENT_ARTIFACT_ID = "artifactId";
+	private static final String POM_ELEMENT_GROUP_ID = "groupId";
+	
+	private static final String DEFAULT_VARIABLE_PREFIX = "maven.";
 	private static final String DEFAULT_POM = "pom.xml";
-
-	private PlanManager planManager;
-	private VariableDefinitionManager variableDefinitionManager;
-	private BambooAgentMessageSender bambooAgentMessageSender;
-
-	public void setPlanManager(PlanManager planManager) {
-		this.planManager = planManager;
-	}
-
-	public void setBambooAgentMessageSender(
-			BambooAgentMessageSender bambooAgentMessageSender) {
-		this.bambooAgentMessageSender = bambooAgentMessageSender;
-	}
-
-	public void setVariableDefinitionManager(
-			VariableDefinitionManager variableDefinitionManager) {
-		this.variableDefinitionManager = variableDefinitionManager;
-	}
 
 	@NotNull
 	@Override
 	public TaskResult execute(@NotNull TaskContext taskContext)
 			throws TaskException {
 
-		BuildContext parentBuildContext = taskContext.getBuildContext()
-				.getParentBuildContext();
-		if (parentBuildContext == null) {
-			return TaskResultBuilder.create(taskContext).success().build();
-		}
-		String topLevelPlanKey = parentBuildContext.getPlanResultKey().getKey();
-		String buildResultKey = taskContext.getBuildContext()
-				.getBuildResultKey();
 		BuildLogger buildLogger = taskContext.getBuildLogger();
 
-		File pomFile = getPomFile(taskContext, buildLogger);
+		TaskConfiguration config = new TaskConfiguration(taskContext);
+
+		File pomFile = getPomFile(config, buildLogger);
 
 		PomValueExtractor extractor = null;
 		try {
@@ -91,78 +72,75 @@ public class MavenVariableTask implements TaskType {
 			return TaskResultBuilder.create(taskContext).failed().build();
 		}
 
-		List<Variable> variables = extractVariables(taskContext, extractor);
-
-		saveOrUpdateVariables(topLevelPlanKey, buildResultKey, buildLogger,
-				variables, taskContext);
+		List<Variable> variables = extractVariables(config, extractor);
+		saveOrUpdateVariables(
+				variables, config);
 
 		return TaskResultBuilder.create(taskContext).success().build();
 	}
 
-	private List<Variable> extractVariables(TaskContext taskContext,
+	private List<Variable> extractVariables(TaskConfiguration config,
 			PomValueExtractor extractor) {
 		List<Variable> variables = new ArrayList<Variable>();
-
-		String gavOrCustom = taskContext.getConfigurationMap().get(
-				"gavOrCustom");
-		if ("0".equals(gavOrCustom)) {
-			String value = extractor.getValue("groupId");
-			variables.add(new Variable(fullVariableName("groupId", taskContext), value));
-
-			value = extractor.getValue("artifactId");
-			variables.add(new Variable(fullVariableName("artifactId", taskContext), value));
-
-			value = extractor.getValue("version");
-			variables.add(new Variable(fullVariableName("version", taskContext), value));
-		} else if ("1".equals(gavOrCustom)) {
-			String variableName = taskContext.getConfigurationMap().get(
-					"customVariableName");
-			String element = taskContext.getConfigurationMap().get(
-					"customElement");
-			String value = extractor.getValue(element);
-			variables.add(new Variable(variableName, value));
+		if (config.isCustomExtract()) {
+			String variableName = config.getCustomVariableName();
+			String element = config.getCustomElement();
+			doExtract(element, variableName, extractor, variables, config);
 		} else {
-			// TODO
+			doExtract(POM_ELEMENT_GROUP_ID,
+					fullVariableName(POM_ELEMENT_GROUP_ID, config), extractor,
+					variables, config);
+			doExtract(POM_ELEMENT_ARTIFACT_ID,
+					fullVariableName(POM_ELEMENT_ARTIFACT_ID, config),
+					extractor, variables, config);
+			doExtract(POM_ELEMENT_VERSION,
+					fullVariableName(POM_ELEMENT_VERSION, config), extractor,
+					variables, config);
 		}
 		return variables;
 	}
-	
-	private String fullVariableName(String name, TaskContext taskContext){
-		String prefix = "maven.";
-		String prefixOption = taskContext.getConfigurationMap().get(
-				"prefixOption");
-		if("0".equals(prefixOption)){
-			prefix = taskContext.getConfigurationMap().get(
-					"customPrefix");
+
+	private void doExtract(String element, String variableName,
+			PomValueExtractor extractor, List<Variable> variables,
+			TaskConfiguration config) {
+		String value = extractor.getValue(element);
+		variables.add(new Variable(variableName, value));
+		BuildLogger logger = config.getBuildLogger();
+		logger.addBuildLogEntry("Extracted " + element
+				+ " from POM. Setting build variable " + variableName + " to "
+				+ value);
+	}
+
+	private String fullVariableName(String name, TaskConfiguration config) {
+		String prefix = DEFAULT_VARIABLE_PREFIX;
+		if (config.isCustomPrefix()) {
+			prefix = config.getCustomPrefix();
+			LOG.debug("Overriding default maven. variable prefix with "
+					+ prefix);
 		}
 		return prefix + name;
 	}
 
-	private void saveOrUpdateVariables(String topLevelPlanKey,
-			String buildResultKey, BuildLogger buildLogger,
-			List<Variable> variables, TaskContext taskContext) {
+	private void saveOrUpdateVariables(
+			List<Variable> variables, TaskConfiguration config) {
 		for (Variable variable : variables) {
 			String name = variable.getName();
 			String value = variable.getValue();
-
-			Map<String, String> customBuildData = taskContext.getBuildContext()
+			Map<String, String> customBuildData = config.getTaskContext().getBuildContext()
 					.getBuildResult().getCustomBuildData();
 			customBuildData.put(name, value);
 		}
 	}
 
-	private File getPomFile(final TaskContext taskContext,
-			BuildLogger buildLogger) {
-		File rootDir = taskContext.getRootDirectory();
-
-		String projectFile = taskContext.getConfigurationMap().get(
-				"projectFile");
-		buildLogger.addBuildLogEntry("projectFile override: " + projectFile);
+	private File getPomFile(TaskConfiguration config, BuildLogger buildLogger) {
+		File rootDir = config.getBaseDir();
 		File pomFile = new File(rootDir, DEFAULT_POM);
-		if (projectFile != null && !"".equals(projectFile)) {
+		if (config.isCustomProjectFile()) {
+			String projectFile = config.getProjectFile();
+			buildLogger.addBuildLogEntry("Overriding " + DEFAULT_POM + " with "
+					+ projectFile);
 			pomFile = new File(rootDir, projectFile);
 		}
 		return pomFile;
 	}
-
 }

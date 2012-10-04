@@ -3,6 +3,7 @@
         <description>${project.description}</description>
         <version>${project.version}</version>
         <vendor name="${project.organization.name}" url="${project.organization.url}" />
+        <param name="plugin-logo">com/davidehringer/atlassian/bamboo/maven/maven-extractor-72x72.png</param>
     </plugin-info>
 
     <resource type="i18n" name="com.davidehringer.atlassian.bamboo.maven language" location="com/davidehringer/atlassian/bamboo/maven/english"/>
@@ -14,6 +15,6 @@
       <configuration class="com.davidehringer.atlassian.bamboo.maven.MavenVariableTaskConfigurator"/>
       
       <resource type="freemarker" name="edit" location="com/davidehringer/atlassian/bamboo/maven/editMavenVariableTask.ftl"/>
-      <resource type="download" name="icon" location="com/davidehringer/atlassian/bamboo/maven/maven.png"/>
+      <resource type="download" name="icon" location="com/davidehringer/atlassian/bamboo/maven/maven-extractor-72x72.png"/>
     </taskType>
 </atlassian-plugin>
