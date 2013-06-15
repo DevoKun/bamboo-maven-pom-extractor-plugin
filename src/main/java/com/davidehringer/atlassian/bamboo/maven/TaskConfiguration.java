@@ -21,6 +21,7 @@ import org.apache.commons.lang.StringUtils;
 
 import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.atlassian.bamboo.configuration.ConfigurationMap;
+import com.atlassian.bamboo.task.CommonTaskContext;
 import com.atlassian.bamboo.task.TaskContext;
 
 /**
@@ -49,9 +50,9 @@ public class TaskConfiguration {
 	private String customVariableName;
 	private String customElement;
 	
-	private TaskContext taskContext;
+	private CommonTaskContext taskContext;
 
-	public TaskConfiguration(TaskContext taskContext) {
+	public TaskConfiguration(CommonTaskContext taskContext) {
 		this.taskContext = taskContext;
 		ConfigurationMap configurationMap= taskContext.getConfigurationMap();
 		projectFile = configurationMap.get(PROJECT_FILE);
@@ -65,7 +66,7 @@ public class TaskConfiguration {
 		}
 	}
 	
-	public TaskContext getTaskContext(){
+	public CommonTaskContext getTaskContext(){
 		return taskContext;
 	}
 	
