@@ -33,7 +33,7 @@
 
 	<scm>
 		<connection>scm:git:https://bitbucket.org/dehringer/bamboo-maven-pom-extractor-plugin.git</connection>
-		<developerConnection>scm:git:https://bitbucket.org/bamboo-maven-pom-extractor-plugin.git</developerConnection>
+		<developerConnection>scm:git:https://bitbucket.org/dehringer/bamboo-maven-pom-extractor-plugin.git</developerConnection>
 		<url>https://bitbucket.org/dehringer/bamboo-maven-pom-extractor-plugin/src</url>
 	</scm>
 
