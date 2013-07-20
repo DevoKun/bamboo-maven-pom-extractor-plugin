@@ -55,6 +55,10 @@
 					<groupId>javax.jms</groupId>
 					<artifactId>jms</artifactId>
 				</exclusion>
+				<exclusion>
+					<artifactId>commons-logging</artifactId>
+					<groupId>commons-logging</groupId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 
