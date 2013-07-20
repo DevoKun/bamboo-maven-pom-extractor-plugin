@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.davidehringer.atlassian.bamboo.maven</groupId>
 	<artifactId>maven-pom-parser-plugin</artifactId>
-	<version>1.2.1-SNAPSHOT</version>
+	<version>1.2.0-SNAPSHOT</version>
 
 	<organization>
 		<name>David Ehringer</name>
