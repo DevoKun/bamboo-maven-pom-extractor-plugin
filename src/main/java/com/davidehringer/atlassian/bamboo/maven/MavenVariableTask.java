@@ -25,12 +25,20 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
+import com.atlassian.bamboo.agent.bootstrap.AgentContext;
 import com.atlassian.bamboo.build.logger.BuildLogger;
+import com.atlassian.bamboo.plan.PlanManager;
 import com.atlassian.bamboo.task.CommonTaskContext;
 import com.atlassian.bamboo.task.CommonTaskType;
+import com.atlassian.bamboo.task.TaskContext;
 import com.atlassian.bamboo.task.TaskException;
 import com.atlassian.bamboo.task.TaskResult;
 import com.atlassian.bamboo.task.TaskResultBuilder;
+import com.atlassian.bamboo.v2.build.BuildContext;
+import com.atlassian.bamboo.v2.build.agent.remote.RemoteAgent;
+import com.atlassian.bamboo.v2.build.agent.remote.sender.BambooAgentMessageSender;
+import com.atlassian.bamboo.variable.VariableDefinitionManager;
+import com.atlassian.spring.container.ContainerManager;
 import com.davidehringer.bamboo.maven.extractor.InvalidPomException;
 import com.davidehringer.bamboo.maven.extractor.PomValueExtractor;
 import com.davidehringer.bamboo.maven.extractor.PomValueExtractorMavenModel;
@@ -49,13 +57,30 @@ public class MavenVariableTask implements CommonTaskType {
     private static final String DEFAULT_VARIABLE_PREFIX = "maven.";
     private static final String DEFAULT_POM = "pom.xml";
 
+    // Stuff for creating Plan variables
+    private PlanManager planManager;
+    private VariableDefinitionManager variableDefinitionManager;
+    private BambooAgentMessageSender bambooAgentMessageSender;
+
+    public void setPlanManager(PlanManager planManager) {
+        this.planManager = planManager;
+    }
+
+    public void setBambooAgentMessageSender(BambooAgentMessageSender bambooAgentMessageSender) {
+        this.bambooAgentMessageSender = bambooAgentMessageSender;
+    }
+
+    public void setVariableDefinitionManager(VariableDefinitionManager variableDefinitionManager) {
+        this.variableDefinitionManager = variableDefinitionManager;
+    }
+
     @NotNull
     @Override
     public TaskResult execute(@NotNull CommonTaskContext taskContext) throws TaskException {
 
         BuildLogger buildLogger = taskContext.getBuildLogger();
-
         TaskConfiguration config = new TaskConfiguration(taskContext);
+        validateVariableType(taskContext, config);
 
         File pomFile = getPomFile(config, buildLogger);
 
@@ -74,6 +99,12 @@ public class MavenVariableTask implements CommonTaskType {
         saveOrUpdateVariables(variables, config);
 
         return TaskResultBuilder.newBuilder(taskContext).success().build();
+    }
+
+    private void validateVariableType(CommonTaskContext taskContext, TaskConfiguration config) throws TaskException {
+        if (config.isPlanVariable() && !(taskContext instanceof TaskContext)) {
+            throw new TaskException("Plan variables can only be set for Build Plans.");
+        }
     }
 
     private List<Variable> extractVariables(TaskConfiguration config, PomValueExtractor extractor) {
@@ -96,9 +127,18 @@ public class MavenVariableTask implements CommonTaskType {
             TaskConfiguration config) {
         String value = extractor.getValue(element);
         variables.add(new Variable(variableName, value));
+        
         BuildLogger logger = config.getBuildLogger();
-        logger.addBuildLogEntry("Extracted " + element + " from POM. Setting build variable " + variableName + " to "
-                + value);
+        StringBuilder message = new StringBuilder();
+        message.append("Extracted ");
+        message.append(element);
+        message.append(" from POM. Setting ");
+        message.append(config.isPlanVariable() ? "Plan" : "Job");
+        message.append(" variable ");
+        message.append(variableName);
+        message.append(" to ");
+        message.append(value);
+        logger.addBuildLogEntry(message.toString());
     }
 
     private String fullVariableName(String name, TaskConfiguration config) {
@@ -111,12 +151,37 @@ public class MavenVariableTask implements CommonTaskType {
     }
 
     private void saveOrUpdateVariables(List<Variable> variables, TaskConfiguration config) {
-        for (Variable variable : variables) {
-            String name = variable.getName();
-            String value = variable.getValue();
-            Map<String, String> customBuildData = config.getTaskContext().getCommonContext().getCurrentResult()
-                    .getCustomBuildData();
-            customBuildData.put(name, value);
+        if (config.isPlanVariable()) {
+            TaskContext taskContext = (TaskContext) config.getTaskContext();
+            
+            BuildContext parentBuildContext = taskContext.getBuildContext().getParentBuildContext();
+            String topLevelPlanKey = parentBuildContext.getPlanResultKey().getKey();
+            String buildResultKey = taskContext.getBuildContext().getBuildResultKey();
+            
+            AgentContext agentContext = RemoteAgent.getContext();
+            if (agentContext != null) {
+                // We're in a remote agent and we can't get access to managers
+                // we want. Send something back home so they can do what we want
+                // instead.
+                if (bambooAgentMessageSender == null) {
+                    bambooAgentMessageSender = (BambooAgentMessageSender) ContainerManager
+                            .getComponent("bambooAgentMessageSender");
+                }
+                bambooAgentMessageSender.send(new CreateOrUpdateVariableMessage(topLevelPlanKey, buildResultKey,
+                        variables));
+            } else {
+                VariableManager manager = new VariableManager(planManager, variableDefinitionManager,
+                        config.getBuildLogger());
+                manager.addOrUpdateVariables(topLevelPlanKey, variables);
+            }
+        } else {
+            for (Variable variable : variables) {
+                String name = variable.getName();
+                String value = variable.getValue();
+                Map<String, String> customBuildData = config.getTaskContext().getCommonContext().getCurrentResult()
+                        .getCustomBuildData();
+                customBuildData.put(name, value);
+            }
         }
     }
 

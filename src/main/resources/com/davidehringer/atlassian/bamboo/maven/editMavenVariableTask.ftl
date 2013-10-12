@@ -1,7 +1,13 @@
 
-[@ww.select labelKey='maven.extractor.config.options' name='gavOrCustom'
-                                        listKey='key' listValue='value' toggle='true'
-                                        list=options /]
+[@ui.bambooSection titleKey='maven.extractor.config.general']
+	[@ww.select labelKey='maven.extractor.config.options' name='gavOrCustom'
+	                                        listKey='key' listValue='value' toggle='true'
+	                                        list=options /]
+	[@ww.radio labelKey='maven.extractor.config.option.variableType' name='variableType'
+	           listKey='key' listValue='value' toggle='true'
+	           list=variableTypeOptions ]
+	[/@ww.radio]
+[/@ui.bambooSection]
                                         
 [@ui.bambooSection dependsOn="gavOrCustom" showOn="0" titleKey='maven.extractor.config.gav']
         [@ww.radio labelKey='maven.extractor.config.option.prefix' name='prefixOption'

@@ -32,6 +32,10 @@ public class TaskConfiguration {
 	public static final String EXTRACT_MODE = "gavOrCustom";
 	public static final String EXTRACT_MODE_GAV = "0";
 	public static final String EXTRACT_MODE_CUSTOM = "1";
+	
+	public static final String VARIABLE_TYPE = "variableType";
+    public static final String VARIABLE_TYPE_JOB = "0";
+    public static final String VARIABLE_TYPE_PLAN = "1";
 
 	public static final String PREFIX_OPTION = "prefixOption";
 	public static final String PREFIX_OPTION_DEFAULT = "1";
@@ -50,6 +54,8 @@ public class TaskConfiguration {
 	private String customVariableName;
 	private String customElement;
 	
+	private boolean planVariable = false;
+	
 	private CommonTaskContext taskContext;
 
 	public TaskConfiguration(CommonTaskContext taskContext) {
@@ -63,6 +69,9 @@ public class TaskConfiguration {
 			customExtract = true;
 			customVariableName = configurationMap.get(CUSTOM_VARIABLE_NAME);
 			customElement = configurationMap.get(CUSTOM_ELEMENT);
+		}
+		if(VARIABLE_TYPE_PLAN.equals(configurationMap.get(VARIABLE_TYPE))){
+		    planVariable = true;
 		}
 	}
 	
@@ -86,7 +95,11 @@ public class TaskConfiguration {
 		return taskContext.getRootDirectory();
 	}
 
-	public boolean isCustomPrefix(){
+	public boolean isPlanVariable() {
+        return planVariable;
+    }
+
+    public boolean isCustomPrefix(){
 		return !StringUtils.isEmpty(customPrefix);
 	}
 
