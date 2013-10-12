@@ -102,16 +102,16 @@ public class MavenVariableTaskConfigurator extends AbstractTaskConfigurator {
 			@NotNull final Map<String, Object> context) {
 		Map<String, String> servers = Maps.newHashMap();
 		servers.put(EXTRACT_MODE_CUSTOM,
-				getI18nBean().getText("config.option.extract.custom"));
+				getI18nBean().getText("maven.extractor.config.option.extract.custom"));
 		servers.put(EXTRACT_MODE_GAV,
-				getI18nBean().getText("config.option.extract.gav"));
+				getI18nBean().getText("maven.extractor.config.option.extract.gav"));
 		context.put("options", servers);
 
 		Map<String, String> prefixOptions = Maps.newHashMap();
 		prefixOptions.put(PREFIX_OPTION_DEFAULT,
-				getI18nBean().getText("config.option.prefix.maven"));
+				getI18nBean().getText("maven.extractor.config.option.prefix.maven"));
 		prefixOptions.put(PREFIX_OPTION_CUSTOM,
-				getI18nBean().getText("config.option.prefix.custom"));
+				getI18nBean().getText("maven.extractor.config.option.prefix.custom"));
 		context.put("prefixOptions", prefixOptions);
 	}
 
@@ -147,11 +147,11 @@ public class MavenVariableTaskConfigurator extends AbstractTaskConfigurator {
 			String element = params.getString(CUSTOM_ELEMENT);
 			if (StringUtils.isEmpty(variableName)) {
 				errorCollection.addError(CUSTOM_VARIABLE_NAME, getI18nBean()
-						.getText("config.custom.variable.name.error"));
+						.getText("maven.extractor.config.custom.variable.name.error"));
 			}
 			if (StringUtils.isEmpty(element)) {
 				errorCollection.addError(CUSTOM_ELEMENT,
-						getI18nBean().getText("config.custom.element.error"));
+						getI18nBean().getText("maven.extractor.config.custom.element.error"));
 			}
 		}
 		if (LOG.isDebugEnabled()) {
