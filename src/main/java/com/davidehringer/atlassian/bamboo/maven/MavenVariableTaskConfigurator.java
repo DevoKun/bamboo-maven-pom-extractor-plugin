@@ -70,9 +70,6 @@ public class MavenVariableTaskConfigurator extends AbstractTaskConfigurator {
             @Nullable final TaskDefinition previousTaskDefinition) {
         final Map<String, String> config = super.generateTaskConfigMap(params, previousTaskDefinition);
         taskConfiguratorHelper.populateTaskConfigMapWithActionParameters(config, params, FIELDS_TO_COPY);
-        
-        System.out.println("******* variable type: " + params.getString(VARIABLE_TYPE));
-        
         return config;
     }
 
