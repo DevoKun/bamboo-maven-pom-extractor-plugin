@@ -22,7 +22,6 @@ import org.apache.commons.lang.StringUtils;
 import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.atlassian.bamboo.configuration.ConfigurationMap;
 import com.atlassian.bamboo.task.CommonTaskContext;
-import com.atlassian.bamboo.task.TaskContext;
 
 /**
  * @author David Ehringer
