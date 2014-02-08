@@ -17,5 +17,7 @@
       
       <resource type="freemarker" name="edit" location="com/davidehringer/atlassian/bamboo/maven/editMavenVariableTask.ftl"/>
       <resource type="download" name="icon" location="com/davidehringer/atlassian/bamboo/maven/maven-extractor-72x72.png"/>
+      
+      <help link="maven.extractor.config.help.link" title="maven.extractor.config.help.title" />
     </taskType>
 </atlassian-plugin>
