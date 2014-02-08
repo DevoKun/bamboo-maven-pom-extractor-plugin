@@ -31,35 +31,42 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
  */
 public class PomValueExtractorMavenModel implements PomValueExtractor {
 
-	private Model model;
+    private Model model;
 
-	public PomValueExtractorMavenModel(File pomFile)
-			throws FileNotFoundException, InvalidPomException {
-		FileReader reader = new FileReader(pomFile);
-		MavenXpp3Reader mavenreader = new MavenXpp3Reader();
-		try {
-			model = mavenreader.read(reader);
-		} catch (IOException e) {
-			throw new InvalidPomException(e);
-		} catch (XmlPullParserException e) {
-			throw new InvalidPomException(e);
-		}
-		model.setPomFile(pomFile);
-	}
+    public PomValueExtractorMavenModel(File pomFile) throws FileNotFoundException, InvalidPomException {
+        FileReader reader = new FileReader(pomFile);
+        MavenXpp3Reader mavenreader = new MavenXpp3Reader();
+        try {
+            model = mavenreader.read(reader);
+        } catch (IOException e) {
+            throw new InvalidPomException(e);
+        } catch (XmlPullParserException e) {
+            throw new InvalidPomException(e);
+        } finally {
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+            } catch (IOException e) {
+                // ignore
+            }
+        }
+        model.setPomFile(pomFile);
+    }
 
-	public String getValue(String property) throws NoSuchPropertyException {
-		try {
-			Object value = PropertyUtils.getProperty(model, property);
-			if (value == null) {
-				return "";
-			}
-			return value.toString();
-		} catch (IllegalAccessException e) {
-			throw new NoSuchPropertyException(e);
-		} catch (InvocationTargetException e) {
-			throw new NoSuchPropertyException(e);
-		} catch (NoSuchMethodException e) {
-			throw new NoSuchPropertyException(e);
-		}
-	}
+    public String getValue(String property) throws NoSuchPropertyException {
+        try {
+            Object value = PropertyUtils.getProperty(model, property);
+            if (value == null) {
+                return "";
+            }
+            return value.toString();
+        } catch (IllegalAccessException e) {
+            throw new NoSuchPropertyException(e);
+        } catch (InvocationTargetException e) {
+            throw new NoSuchPropertyException(e);
+        } catch (NoSuchMethodException e) {
+            throw new NoSuchPropertyException(e);
+        }
+    }
 }
