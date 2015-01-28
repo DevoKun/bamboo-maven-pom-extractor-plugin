@@ -18,7 +18,7 @@ package com.davidehringer.atlassian.bamboo.maven;
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.VARIABLE_TYPE;
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.VARIABLE_TYPE_JOB;
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.VARIABLE_TYPE_PLAN;
-import static org.junit.Assert.assertFalse;
+import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.VARIABLE_TYPE_RESULT;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -47,28 +47,36 @@ public class TaskConfigurationTest {
     }
 
     @Test
-    public void whenVariableTypeIsNullThenPlanVariableIsFalse() {
+    public void whenVariableTypeIsNullThenDefaultToJobVariable() {
         // To support tasks that were configured prior to version 1.3 of the
         // plugin where VARIABLE_TYPE didn't exist
         when(configurationMap.get(VARIABLE_TYPE)).thenReturn(null);
 
         TaskConfiguration taskConfiguration = new TaskConfiguration(context);
-        assertFalse(taskConfiguration.isPlanVariable());
+        assertTrue(taskConfiguration.areVariablesOfType(VariableType.JOB));
     }
 
     @Test
-    public void whenVariableTypeIsJobThenPlanVariableIsFalse() {
+    public void whenVariableTypeIsJob() {
         when(configurationMap.get(VARIABLE_TYPE)).thenReturn(VARIABLE_TYPE_JOB);
 
         TaskConfiguration taskConfiguration = new TaskConfiguration(context);
-        assertFalse(taskConfiguration.isPlanVariable());
+        assertTrue(taskConfiguration.areVariablesOfType(VariableType.JOB));
     }
 
     @Test
-    public void whenVariableTypeIsPlanThenPlanVariableIsTrue() {
+    public void whenVariableTypeIsPlan() {
         when(configurationMap.get(VARIABLE_TYPE)).thenReturn(VARIABLE_TYPE_PLAN);
 
         TaskConfiguration taskConfiguration = new TaskConfiguration(context);
-        assertTrue(taskConfiguration.isPlanVariable());
+        assertTrue(taskConfiguration.areVariablesOfType(VariableType.PLAN));
+    }
+
+    @Test
+    public void whenVariableTypeIsResult() {
+        when(configurationMap.get(VARIABLE_TYPE)).thenReturn(VARIABLE_TYPE_RESULT);
+
+        TaskConfiguration taskConfiguration = new TaskConfiguration(context);
+        assertTrue(taskConfiguration.areVariablesOfType(VariableType.RESULT));
     }
 }

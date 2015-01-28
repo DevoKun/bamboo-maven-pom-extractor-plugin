@@ -27,3 +27,18 @@
 [@ui.bambooSection titleKey='maven.extractor.config.pom.options']
 	[@ww.textfield labelKey='builder.maven2.projectFile' name='projectFile' cssClass="long-field" /]
 [/@ui.bambooSection]
+
+<script type="text/javascript">
+(function ($) {
+
+	var helpIcon = $("#variableContextHelp");
+	var helpDialog = AJS.InlineDialog(helpIcon, "contextHelpDialog",
+		    function(content, trigger, showPopup) {
+		        content.css({"padding":"20px"}).html('<b>Job</b> scoped variables have local scope and they cease to exist when the job finishes.<br/><br/><b>Result</b> scoped variables persist beyond the execution of a Job and are passed into subsequent stages or related deployment releases.<br/><br/><b>Plan</b> variables are visible to any jobs and stages in the Plan. Any new plan variables you set or any changes to plan variables that you make within the context of that build will not take effect until the next build executes. Plan variables can only be set for Build Plans and not Deployment Projects.</dd></dl>');
+		        showPopup();
+		        return false;
+		    }
+		);
+
+}(jQuery));
+</script>

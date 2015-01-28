@@ -28,6 +28,7 @@ import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.PROJECT
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.VARIABLE_TYPE;
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.VARIABLE_TYPE_JOB;
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.VARIABLE_TYPE_PLAN;
+import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.VARIABLE_TYPE_RESULT;
 
 import java.util.List;
 import java.util.Map;
@@ -77,7 +78,7 @@ public class MavenVariableTaskConfigurator extends AbstractTaskConfigurator {
     public void populateContextForCreate(@NotNull final Map<String, Object> context) {
         super.populateContextForCreate(context);
         context.put(EXTRACT_MODE, EXTRACT_MODE_GAV);
-        context.put(VARIABLE_TYPE, VARIABLE_TYPE_JOB);
+        context.put(VARIABLE_TYPE, VARIABLE_TYPE_RESULT);
         context.put(PREFIX_OPTION, PREFIX_OPTION_DEFAULT);
         populateContextForAll(context);
     }
@@ -105,6 +106,8 @@ public class MavenVariableTaskConfigurator extends AbstractTaskConfigurator {
         Map<String, String> variableTypeOptions = Maps.newHashMap();
         variableTypeOptions.put(VARIABLE_TYPE_JOB,
                 textProvider.getText("maven.extractor.config.option.variableType.job"));
+        variableTypeOptions.put(VARIABLE_TYPE_RESULT,
+                textProvider.getText("maven.extractor.config.option.variableType.result"));
         variableTypeOptions.put(VARIABLE_TYPE_PLAN,
                 textProvider.getText("maven.extractor.config.option.variableType.plan"));
         context.put("variableTypeOptions", variableTypeOptions);

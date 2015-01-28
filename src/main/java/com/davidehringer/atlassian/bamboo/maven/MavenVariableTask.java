@@ -15,11 +15,14 @@
  */
 package com.davidehringer.atlassian.bamboo.maven;
 
+import static com.davidehringer.atlassian.bamboo.maven.VariableType.JOB;
+import static com.davidehringer.atlassian.bamboo.maven.VariableType.PLAN;
+import static com.davidehringer.atlassian.bamboo.maven.VariableType.RESULT;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,6 +40,7 @@ import com.atlassian.bamboo.task.TaskResultBuilder;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bamboo.v2.build.agent.remote.RemoteAgent;
 import com.atlassian.bamboo.v2.build.agent.remote.sender.BambooAgentMessageSender;
+import com.atlassian.bamboo.variable.VariableContext;
 import com.atlassian.bamboo.variable.VariableDefinitionManager;
 import com.atlassian.spring.container.ContainerManager;
 import com.davidehringer.bamboo.maven.extractor.InvalidPomException;
@@ -102,7 +106,7 @@ public class MavenVariableTask implements CommonTaskType {
     }
 
     private void validateVariableType(CommonTaskContext taskContext, TaskConfiguration config) throws TaskException {
-        if (config.isPlanVariable() && !(taskContext instanceof TaskContext)) {
+        if (config.areVariablesOfType(PLAN) && !(taskContext instanceof TaskContext)) {
             throw new TaskException("Plan variables can only be set for Build Plans.");
         }
     }
@@ -133,7 +137,7 @@ public class MavenVariableTask implements CommonTaskType {
         message.append("Extracted ");
         message.append(element);
         message.append(" from POM. Setting ");
-        message.append(config.isPlanVariable() ? "Plan" : "Job");
+        message.append(config.getVariableType());
         message.append(" variable ");
         message.append(variableName);
         message.append(" to ");
@@ -151,39 +155,54 @@ public class MavenVariableTask implements CommonTaskType {
     }
 
     private void saveOrUpdateVariables(List<Variable> variables, TaskConfiguration config) {
-        if (config.isPlanVariable()) {
-            TaskContext taskContext = (TaskContext) config.getTaskContext();
-            
-            BuildContext parentBuildContext = taskContext.getBuildContext().getParentBuildContext();
-            String topLevelPlanKey = parentBuildContext.getPlanResultKey().getKey();
-            String buildResultKey = taskContext.getBuildContext().getBuildResultKey();
-            
-            AgentContext agentContext = RemoteAgent.getContext();
-            if (agentContext != null) {
-                // We're in a remote agent and we can't get access to managers
-                // we want. Send something back home so they can do what we want
-                // instead.
-                if (bambooAgentMessageSender == null) {
-                    bambooAgentMessageSender = (BambooAgentMessageSender) ContainerManager
-                            .getComponent("bambooAgentMessageSender");
-                }
-                bambooAgentMessageSender.send(new CreateOrUpdateVariableMessage(topLevelPlanKey, buildResultKey,
-                        variables));
-            } else {
-                VariableManager manager = new VariableManager(planManager, variableDefinitionManager,
-                        config.getBuildLogger());
-                manager.addOrUpdateVariables(topLevelPlanKey, variables);
-            }
+        if (config.areVariablesOfType(PLAN)) {
+            saveAsPlanVariables(variables, config);
         } else {
-            for (Variable variable : variables) {
-                String name = variable.getName();
-                String value = variable.getValue();
-                Map<String, String> customBuildData = config.getTaskContext().getCommonContext().getCurrentResult()
-                        .getCustomBuildData();
-                customBuildData.put(name, value);
-            }
+            saveAsJobOrResultVariables(variables, config);
         }
     }
+
+	private void saveAsJobOrResultVariables(List<Variable> variables, TaskConfiguration config) {
+		for (Variable variable : variables) {
+		    String name = variable.getName();
+		    String value = variable.getValue();
+
+		    final VariableContext variableContext = config.getTaskContext().getCommonContext().getVariableContext();
+		    if(config.areVariablesOfType(RESULT)){
+		    	variableContext.addResultVariable(name, value);
+		    }else if(config.areVariablesOfType(JOB)){
+		    	variableContext.addLocalVariable(name, value);
+		    }else{
+		    	throw new IllegalArgumentException("Unknown variable type '" + config.getVariableType() + "'");
+		    }
+		}
+	}
+
+	private void saveAsPlanVariables(List<Variable> variables,
+			TaskConfiguration config) {
+		TaskContext taskContext = (TaskContext) config.getTaskContext();
+		
+		BuildContext parentBuildContext = taskContext.getBuildContext().getParentBuildContext();
+		String topLevelPlanKey = parentBuildContext.getPlanResultKey().getKey();
+		String buildResultKey = taskContext.getBuildContext().getBuildResultKey();
+		
+		AgentContext agentContext = RemoteAgent.getContext();
+		if (agentContext != null) {
+		    // We're in a remote agent and we can't get access to managers
+		    // we want. Send something back home so they can do what we want
+		    // instead.
+		    if (bambooAgentMessageSender == null) {
+		        bambooAgentMessageSender = (BambooAgentMessageSender) ContainerManager
+		                .getComponent("bambooAgentMessageSender");
+		    }
+		    bambooAgentMessageSender.send(new CreateOrUpdateVariableMessage(topLevelPlanKey, buildResultKey,
+		            variables));
+		} else {
+		    VariableManager manager = new VariableManager(planManager, variableDefinitionManager,
+		            config.getBuildLogger());
+		    manager.addOrUpdateVariables(topLevelPlanKey, variables);
+		}
+	}
 
     private File getPomFile(TaskConfiguration config, BuildLogger buildLogger) {
         File rootDir = config.getBaseDir();

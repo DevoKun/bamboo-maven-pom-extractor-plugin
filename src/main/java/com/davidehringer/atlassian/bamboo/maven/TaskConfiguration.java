@@ -35,6 +35,7 @@ public class TaskConfiguration {
 	public static final String VARIABLE_TYPE = "variableType";
     public static final String VARIABLE_TYPE_JOB = "0";
     public static final String VARIABLE_TYPE_PLAN = "1";
+    public static final String VARIABLE_TYPE_RESULT = "2";
 
 	public static final String PREFIX_OPTION = "prefixOption";
 	public static final String PREFIX_OPTION_DEFAULT = "1";
@@ -46,31 +47,43 @@ public class TaskConfiguration {
 	public static final String CUSTOM_VARIABLE_NAME = "customVariableName";
 	public static final String CUSTOM_ELEMENT = "customElement";
 
-	private String projectFile;
-	private String customPrefix;
+	private final String projectFile;
+	private final String customPrefix;
 
 	private boolean customExtract = false;
 	private String customVariableName;
 	private String customElement;
 	
-	private boolean planVariable = false;
+	private final VariableType variableType;
 	
-	private CommonTaskContext taskContext;
+	private final CommonTaskContext taskContext;
 
 	public TaskConfiguration(CommonTaskContext taskContext) {
 		this.taskContext = taskContext;
 		ConfigurationMap configurationMap= taskContext.getConfigurationMap();
 		projectFile = configurationMap.get(PROJECT_FILE);
 		if (PREFIX_OPTION_CUSTOM.equals(configurationMap.get(PREFIX_OPTION))) {
-				customPrefix = configurationMap.get(PREFIX_OPTION_CUSTOM_VALUE);
+			customPrefix = configurationMap.get(PREFIX_OPTION_CUSTOM_VALUE);
+		}else{
+			customPrefix = null;	
 		}
 		if(EXTRACT_MODE_CUSTOM.equals(configurationMap.get(EXTRACT_MODE))){
 			customExtract = true;
 			customVariableName = configurationMap.get(CUSTOM_VARIABLE_NAME);
 			customElement = configurationMap.get(CUSTOM_ELEMENT);
 		}
-		if(VARIABLE_TYPE_PLAN.equals(configurationMap.get(VARIABLE_TYPE))){
-		    planVariable = true;
+		
+		String selectedType = configurationMap.get(VARIABLE_TYPE);
+		if(VARIABLE_TYPE_PLAN.equals(selectedType)){
+		    variableType = VariableType.PLAN;
+		}else if(VARIABLE_TYPE_RESULT.equals(selectedType)){
+			variableType = VariableType.RESULT;
+		}else if(VARIABLE_TYPE_JOB.equals(selectedType)){
+		    variableType = VariableType.JOB;
+		}else{
+			// To support tasks that were configured prior to version 1.3 of the
+	        // plugin where VARIABLE_TYPE didn't exist
+		    variableType = VariableType.JOB;
 		}
 	}
 	
@@ -94,9 +107,13 @@ public class TaskConfiguration {
 		return taskContext.getRootDirectory();
 	}
 
-	public boolean isPlanVariable() {
-        return planVariable;
-    }
+	public VariableType getVariableType(){
+		return variableType;
+	}
+
+	public boolean areVariablesOfType(VariableType otherVariableType) {
+		return variableType.equals(otherVariableType);
+	}
 
     public boolean isCustomPrefix(){
 		return !StringUtils.isEmpty(customPrefix);
