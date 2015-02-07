@@ -29,13 +29,13 @@ import com.atlassian.bamboo.variable.VariableType;
 /**
  * @author David Ehringer
  */
-public class VariableManager {
+public class BambooVariableManager {
 
 	private final PlanManager planManager;
 	private final VariableDefinitionManager variableDefinitionManager;
 	private final BuildLogger buildLogger;
 
-	public VariableManager(PlanManager planManager,
+	public BambooVariableManager(PlanManager planManager,
 			VariableDefinitionManager variableDefinitionManager,
 			BuildLogger buildLogger) {
 		this.planManager = planManager;

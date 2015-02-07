@@ -32,6 +32,8 @@ public class TaskConfiguration {
 	public static final String EXTRACT_MODE_GAV = "0";
 	public static final String EXTRACT_MODE_CUSTOM = "1";
 	
+    public static final String STRIP_SNAPSHOT = "stripSnapshot";
+	
 	public static final String VARIABLE_TYPE = "variableType";
     public static final String VARIABLE_TYPE_JOB = "0";
     public static final String VARIABLE_TYPE_PLAN = "1";
@@ -53,6 +55,8 @@ public class TaskConfiguration {
 	private boolean customExtract = false;
 	private String customVariableName;
 	private String customElement;
+	
+	private boolean stripSnaphost = false;
 	
 	private final VariableType variableType;
 	
@@ -84,6 +88,10 @@ public class TaskConfiguration {
 			// To support tasks that were configured prior to version 1.3 of the
 	        // plugin where VARIABLE_TYPE didn't exist
 		    variableType = VariableType.JOB;
+		}
+		
+		if(Boolean.valueOf(configurationMap.get(STRIP_SNAPSHOT))){
+		    stripSnaphost = true;
 		}
 	}
 	
@@ -134,4 +142,9 @@ public class TaskConfiguration {
 	public String getCustomElement() {
 		return customElement;
 	}
+
+    public boolean isStripSnaphost() {
+        return stripSnaphost;
+    }
+
 }

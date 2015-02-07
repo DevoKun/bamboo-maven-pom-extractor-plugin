@@ -21,11 +21,8 @@ import static com.davidehringer.atlassian.bamboo.maven.VariableType.RESULT;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import com.atlassian.bamboo.agent.bootstrap.AgentContext;
@@ -52,13 +49,6 @@ import com.davidehringer.bamboo.maven.extractor.PomValueExtractorMavenModel;
  */
 public class MavenVariableTask implements CommonTaskType {
 
-    private static final Log LOG = LogFactory.getLog(MavenVariableTask.class);
-
-    private static final String POM_ELEMENT_VERSION = "version";
-    private static final String POM_ELEMENT_ARTIFACT_ID = "artifactId";
-    private static final String POM_ELEMENT_GROUP_ID = "groupId";
-
-    private static final String DEFAULT_VARIABLE_PREFIX = "maven.";
     private static final String DEFAULT_POM = "pom.xml";
 
     // Stuff for creating Plan variables
@@ -112,46 +102,8 @@ public class MavenVariableTask implements CommonTaskType {
     }
 
     private List<Variable> extractVariables(TaskConfiguration config, PomValueExtractor extractor) {
-        List<Variable> variables = new ArrayList<Variable>();
-        if (config.isCustomExtract()) {
-            String variableName = config.getCustomVariableName();
-            String element = config.getCustomElement();
-            doExtract(element, variableName, extractor, variables, config);
-        } else {
-            doExtract(POM_ELEMENT_GROUP_ID, fullVariableName(POM_ELEMENT_GROUP_ID, config), extractor, variables,
-                    config);
-            doExtract(POM_ELEMENT_ARTIFACT_ID, fullVariableName(POM_ELEMENT_ARTIFACT_ID, config), extractor, variables,
-                    config);
-            doExtract(POM_ELEMENT_VERSION, fullVariableName(POM_ELEMENT_VERSION, config), extractor, variables, config);
-        }
-        return variables;
-    }
-
-    private void doExtract(String element, String variableName, PomValueExtractor extractor, List<Variable> variables,
-            TaskConfiguration config) {
-        String value = extractor.getValue(element);
-        variables.add(new Variable(variableName, value));
-        
-        BuildLogger logger = config.getBuildLogger();
-        StringBuilder message = new StringBuilder();
-        message.append("Extracted ");
-        message.append(element);
-        message.append(" from POM. Setting ");
-        message.append(config.getVariableType());
-        message.append(" variable ");
-        message.append(variableName);
-        message.append(" to ");
-        message.append(value);
-        logger.addBuildLogEntry(message.toString());
-    }
-
-    private String fullVariableName(String name, TaskConfiguration config) {
-        String prefix = DEFAULT_VARIABLE_PREFIX;
-        if (config.isCustomPrefix()) {
-            prefix = config.getCustomPrefix();
-            LOG.debug("Overriding default maven. variable prefix with " + prefix);
-        }
-        return prefix + name;
+        VariablesExtractor variablesExtractor = new VariablesExtractor(extractor);
+        return variablesExtractor.extractVariables(config);
     }
 
     private void saveOrUpdateVariables(List<Variable> variables, TaskConfiguration config) {
@@ -198,7 +150,7 @@ public class MavenVariableTask implements CommonTaskType {
 		    bambooAgentMessageSender.send(new CreateOrUpdateVariableMessage(topLevelPlanKey, buildResultKey,
 		            variables));
 		} else {
-		    VariableManager manager = new VariableManager(planManager, variableDefinitionManager,
+		    BambooVariableManager manager = new BambooVariableManager(planManager, variableDefinitionManager,
 		            config.getBuildLogger());
 		    manager.addOrUpdateVariables(topLevelPlanKey, variables);
 		}

@@ -15,7 +15,7 @@
  */
 package com.davidehringer.atlassian.bamboo.maven;
 
-import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.CUSTOM_ELEMENT;
+import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.*;
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.CUSTOM_VARIABLE_NAME;
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.EXTRACT_MODE;
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.EXTRACT_MODE_CUSTOM;
@@ -56,7 +56,7 @@ public class MavenVariableTaskConfigurator extends AbstractTaskConfigurator {
     private static final Log LOG = LogFactory.getLog(MavenVariableTaskConfigurator.class);
 
     private static final List<String> FIELDS_TO_COPY = ImmutableList.of(PROJECT_FILE, EXTRACT_MODE, VARIABLE_TYPE,
-            PREFIX_OPTION, PREFIX_OPTION_CUSTOM_VALUE, CUSTOM_VARIABLE_NAME, CUSTOM_ELEMENT);
+            PREFIX_OPTION, PREFIX_OPTION_CUSTOM_VALUE, CUSTOM_VARIABLE_NAME, CUSTOM_ELEMENT, STRIP_SNAPSHOT);
 
     private TextProvider textProvider;
     

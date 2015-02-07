@@ -15,10 +15,12 @@
  */
 package com.davidehringer.atlassian.bamboo.maven;
 
+import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.STRIP_SNAPSHOT;
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.VARIABLE_TYPE;
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.VARIABLE_TYPE_JOB;
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.VARIABLE_TYPE_PLAN;
 import static com.davidehringer.atlassian.bamboo.maven.TaskConfiguration.VARIABLE_TYPE_RESULT;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -78,5 +80,21 @@ public class TaskConfigurationTest {
 
         TaskConfiguration taskConfiguration = new TaskConfiguration(context);
         assertTrue(taskConfiguration.areVariablesOfType(VariableType.RESULT));
+    }
+
+    @Test
+    public void whenStripSnapshotIsNullThenItIsDefaultedToFalse() {
+        when(configurationMap.get(STRIP_SNAPSHOT)).thenReturn(null);
+
+        TaskConfiguration taskConfiguration = new TaskConfiguration(context);
+        assertFalse(taskConfiguration.isStripSnaphost());
+    }
+
+    @Test
+    public void whenStripSnapshotIsTrueThenItIsSetToTrue() {
+        when(configurationMap.get(STRIP_SNAPSHOT)).thenReturn("true");
+
+        TaskConfiguration taskConfiguration = new TaskConfiguration(context);
+        assertTrue(taskConfiguration.isStripSnaphost());
     }
 }

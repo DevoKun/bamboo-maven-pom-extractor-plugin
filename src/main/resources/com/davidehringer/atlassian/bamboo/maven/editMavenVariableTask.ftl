@@ -10,6 +10,7 @@
 [/@ui.bambooSection]
                                         
 [@ui.bambooSection dependsOn="gavOrCustom" showOn="0" titleKey='maven.extractor.config.gav']
+        [@ww.checkbox labelKey='maven.extractor.config.gav.stripSnapshot' name='stripSnapshot' /]
         [@ww.radio labelKey='maven.extractor.config.option.prefix' name='prefixOption'
                    listKey='key' listValue='value' toggle='true'
                    list=prefixOptions ]

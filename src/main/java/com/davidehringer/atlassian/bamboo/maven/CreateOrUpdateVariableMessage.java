@@ -54,7 +54,7 @@ public class CreateOrUpdateVariableMessage extends AbstractBambooAgentMessage {
 		BuildLogger buildLogger = buildLoggerManager
 				.getBuildLogger(planResultKey);
 
-		VariableManager manager = new VariableManager(planManager,
+		BambooVariableManager manager = new BambooVariableManager(planManager,
 				variableDefinitionManager, buildLogger);
 		manager.addOrUpdateVariables(topLevelPlanKey, variables);
 
