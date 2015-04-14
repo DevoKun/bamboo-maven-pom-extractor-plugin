@@ -52,7 +52,7 @@ public class CreateOrUpdateVariableMessage extends AbstractBambooAgentMessage {
 		PlanResultKey planResultKey = PlanKeys.getPlanResultKey(buildResultKey);
 
 		BuildLogger buildLogger = buildLoggerManager
-				.getBuildLogger(planResultKey);
+				.getLogger(planResultKey);
 
 		BambooVariableManager manager = new BambooVariableManager(planManager,
 				variableDefinitionManager, buildLogger);

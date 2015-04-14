@@ -36,8 +36,8 @@
 	</scm>
 
 	<properties>
-		<bamboo.version>5.7.0</bamboo.version>
-		<bamboo.data.version>3.2.2</bamboo.data.version>
+		<bamboo.version>5.8.1</bamboo.version>
+		<bamboo.data.version>5.3</bamboo.data.version>
 		<amps.version>6.0</amps.version>
 	</properties>
 
