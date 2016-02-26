@@ -23,9 +23,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.List;
 
+import com.atlassian.bamboo.agent.AgentType;
+import com.atlassian.bamboo.agent.bootstrap.AgentContext;
 import org.jetbrains.annotations.NotNull;
 
-import com.atlassian.bamboo.agent.bootstrap.AgentContext;
 import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.atlassian.bamboo.plan.PlanManager;
 import com.atlassian.bamboo.task.CommonTaskContext;
@@ -55,6 +56,11 @@ public class MavenVariableTask implements CommonTaskType {
     private PlanManager planManager;
     private VariableDefinitionManager variableDefinitionManager;
     private BambooAgentMessageSender bambooAgentMessageSender;
+    private AgentContext agentContext;
+
+    public void setAgentContext(AgentContext agentContext) {
+        this.agentContext = agentContext;
+    }
 
     public void setPlanManager(PlanManager planManager) {
         this.planManager = planManager;
@@ -137,8 +143,16 @@ public class MavenVariableTask implements CommonTaskType {
 		BuildContext parentBuildContext = taskContext.getBuildContext().getParentBuildContext();
 		String topLevelPlanKey = parentBuildContext.getPlanResultKey().getKey();
 		String buildResultKey = taskContext.getBuildContext().getBuildResultKey();
-		
-		AgentContext agentContext = RemoteAgent.getContext();
+
+        AgentContext agentContext = null;
+        try {
+            // In 5.10, RemoteAgent.getContext() started throwing an exception instead of returning null.
+            // I'm not sure of an alternative way to determine if we are running in a remote agent so this
+            // ugly hack exists.
+            agentContext = RemoteAgent.getContext();
+        }catch (IllegalStateException e){
+
+        }
 		if (agentContext != null) {
 		    // We're in a remote agent and we can't get access to managers
 		    // we want. Send something back home so they can do what we want
