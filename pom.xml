@@ -29,9 +29,9 @@
         <url>https://bitbucket.org/dehringer/bamboo-maven-pom-extractor-plugin/src</url>
     </scm>
     <properties>
-        <bamboo.version>5.10.0</bamboo.version>
-        <bamboo.data.version>5.3</bamboo.data.version>
-        <amps.version>6.2.1</amps.version>
+        <bamboo.version>5.15.3</bamboo.version>
+        <bamboo.data.version>5.15.3</bamboo.data.version>
+        <amps.version>6.2.6</amps.version>
     </properties>
     <dependencies>
         <dependency>
