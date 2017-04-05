@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.davidehringer.atlassian.bamboo.maven</groupId>
     <artifactId>maven-pom-parser-plugin</artifactId>
-    <version>1.7.0-SNAPSHOT</version>
+    <version>1.7.1-SNAPSHOT</version>
     <organization>
         <name>David Ehringer</name>
         <url>http://davidehringer.com</url>

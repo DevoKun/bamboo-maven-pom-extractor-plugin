@@ -46,6 +46,18 @@ The Bamboo Maven POM Value Extractor
 
 
 
+## To Compile
+
+* Use the maven install target
+
+```shell
+mvn install
+```
+
+* The resulting build artifact will be at: **target/maven-pom-parser-plugin-*.jar**
+
+
+
 ## License
 
 * [Apache License Version 2.0, January 2004](http://www.apache.org/licenses/)
